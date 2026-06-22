@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  password          String
+  hashedRefreshToken String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  rooms              RoomPlayer[]
+
+  @@map("users")
+}
+
+model Room {
+  id        String   @id @default(cuid())
+  roomId    String   @unique
+  board     String[] @default(["", "", "", "", "", "", "", "", ""])
+  turn      String   @default("X")
+  status    String   @default("waiting") // waiting | playing | finished
+  winner    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  players RoomPlayer[]
+
+  @@map("rooms")
+}
+
+model RoomPlayer {
+  id        String @id @default(cuid())
+  symbol    String // X or O
+  userId    String
+  roomId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roomId])
+  @@map("room_players")
+}
