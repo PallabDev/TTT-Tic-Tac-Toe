@@ -20,6 +20,7 @@ export default function RoomPage() {
   const lastUpdateRef = useRef<string>("");
 
   const fetchRoom = useCallback(async () => {
+    if (isMoving) return;
     try {
       const res = await api.rooms.get(roomId);
       const newRoom = res.data.room;
@@ -32,7 +33,7 @@ export default function RoomPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch room");
     }
-  }, [roomId]);
+  }, [roomId, isMoving]);
 
   useEffect(() => {
     fetchRoom();
@@ -67,6 +68,41 @@ export default function RoomPage() {
     if (!room || !myPlayer || isMoving) return;
     if (room.status !== "playing" || room.turn !== myPlayer.symbol || room.board[cellIndex]) return;
 
+    const previousRoom = room;
+    // Apply optimistic updates immediately to the UI
+    const optimisticBoard = [...room.board];
+    optimisticBoard[cellIndex] = myPlayer.symbol;
+    const nextTurn = room.turn === "X" ? "O" : "X";
+    
+    // Check if there is an optimistic winner to show immediate status changes
+    const lines = [
+      [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
+      [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
+      [0, 4, 8], [2, 4, 6]             // diagonals
+    ];
+    let optimisticWinner = null;
+    let optimisticStatus = room.status;
+    for (const [a, b, c] of lines) {
+      if (optimisticBoard[a] && optimisticBoard[a] === optimisticBoard[b] && optimisticBoard[a] === optimisticBoard[c]) {
+        optimisticWinner = optimisticBoard[a];
+        optimisticStatus = "finished";
+        break;
+      }
+    }
+    if (optimisticStatus !== "finished" && optimisticBoard.every((cell) => cell !== "")) {
+      optimisticStatus = "finished";
+      optimisticWinner = "DRAW";
+    }
+
+    const optimisticRoom = {
+      ...room,
+      board: optimisticBoard,
+      turn: nextTurn,
+      status: optimisticStatus,
+      winner: optimisticWinner,
+    };
+
+    setRoom(optimisticRoom);
     setIsMoving(true);
     setError("");
     try {
@@ -74,6 +110,8 @@ export default function RoomPage() {
       setRoom(res.data.room);
       lastUpdateRef.current = res.data.room.updatedAt;
     } catch (err) {
+      // Revert to previous room state on network error
+      setRoom(previousRoom);
       setError(err instanceof Error ? err.message : "Move failed");
     } finally {
       setIsMoving(false);
