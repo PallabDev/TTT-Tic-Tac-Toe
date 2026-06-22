@@ -10,7 +10,7 @@ const POLL_INTERVAL = 1000;
 
 export default function RoomPage() {
   const { roomId } = useParams<{ roomId: string }>();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [room, setRoom] = useState<Room | null>(null);
   const [error, setError] = useState("");
@@ -46,6 +46,22 @@ export default function RoomPage() {
     () => room?.players.find((p) => p.userId === user?.id),
     [room, user]
   );
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.replace("/login");
+    }
+  }, [user, authLoading, router]);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-5 bg-neutral-primary-soft">
+        <p className="text-sm text-body-subtle">Checking authentication...</p>
+      </div>
+    );
+  }
+
+  if (!user) return null;
 
   const makeMove = async (cellIndex: number) => {
     if (!room || !myPlayer || isMoving) return;
@@ -95,50 +111,50 @@ export default function RoomPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-5">
-      <div className="w-full max-w-[420px] rounded-xl border border-border bg-surface p-6 shadow-2xl backdrop-blur-xl fade-in">
+    <div className="min-h-screen flex items-center justify-center p-5 bg-neutral-primary-soft">
+      <div className="w-full max-w-[420px] sketch-card bg-neutral-primary-medium fade-in">
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-xl font-bold">Room {roomId}</h2>
+          <h2 className="text-3xl font-hand font-normal text-heading">Room {roomId}</h2>
           <button
             type="button"
-            className="px-3 py-1.5 text-sm rounded-lg border border-border bg-transparent hover:bg-surface-hover transition-colors"
+            className="sketch-button sketch-button-secondary text-xs px-4 py-1.5"
             onClick={leaveToLobby}
           >
             Back
           </button>
         </div>
 
-        {error && <p className="text-error text-sm mb-3">{error}</p>}
+        {error && <p className="text-danger text-sm font-medium mb-3 text-center">{error}</p>}
 
         {!room ? (
-          <div className="flex flex-col items-center gap-3 py-8">
-            <p className="text-sm text-muted">Fetching room...</p>
+          <div className="flex flex-col items-center gap-4 py-8">
+            <p className="text-sm text-body-subtle">Fetching room...</p>
             <button
               type="button"
               onClick={joinRoom}
-              className="px-4 py-2 text-sm rounded-lg border border-border bg-surface hover:bg-surface-hover transition-colors"
+              className="sketch-button sketch-button-secondary text-sm py-2 px-6"
             >
               Join Room
             </button>
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-3 gap-2 mb-4">
-              <div className="p-2.5 rounded-lg border border-border bg-background/50 text-center">
-                <span className="text-[11px] text-muted uppercase block">Game</span>
-                <strong className="text-xs mt-1 block capitalize">{room.status}</strong>
+            <div className="grid grid-cols-3 gap-2.5 mb-4">
+              <div className="p-2 rounded-xl border-2 border-dashed border-default bg-neutral-primary-soft text-center">
+                <span className="text-[10px] text-body-subtle font-bold uppercase block">Game</span>
+                <strong className="text-xs mt-0.5 block capitalize text-heading">{room.status}</strong>
               </div>
-              <div className="p-2.5 rounded-lg border border-border bg-background/50 text-center">
-                <span className="text-[11px] text-muted uppercase block">You</span>
-                <strong className="text-xs mt-1 block capitalize">{myPlayer?.symbol || "Spectator"}</strong>
+              <div className="p-2 rounded-xl border-2 border-dashed border-default bg-neutral-primary-soft text-center">
+                <span className="text-[10px] text-body-subtle font-bold uppercase block">You</span>
+                <strong className="text-xs mt-0.5 block capitalize text-heading">{myPlayer?.symbol || "Spectator"}</strong>
               </div>
-              <div className="p-2.5 rounded-lg border border-border bg-background/50 text-center">
-                <span className="text-[11px] text-muted uppercase block">Sync</span>
-                <strong className="text-xs mt-1 block text-success">live</strong>
+              <div className="p-2 rounded-xl border-2 border-dashed border-default bg-neutral-primary-soft text-center">
+                <span className="text-[10px] text-body-subtle font-bold uppercase block">Sync</span>
+                <strong className="text-xs mt-0.5 block text-brand font-bold uppercase">live</strong>
               </div>
             </div>
 
-            <div className="flex items-center justify-center min-h-[42px] rounded-lg bg-gradient-to-r from-primary/15 to-accent/10 border border-border font-bold text-sm mb-4">
+            <div className="flex items-center justify-center min-h-[42px] rounded-xl border-2 border-dashed border-brand bg-brand-softer text-fg-brand-strong font-bold text-sm mb-4">
               {room.status === "finished"
                 ? room.winner === "DRAW"
                   ? "Draw game"
@@ -148,40 +164,41 @@ export default function RoomPage() {
                 : `${room.turn}'s turn`}
             </div>
 
-            <div className="grid grid-cols-3 gap-2.5 mb-4">
-              {room.board.map((cell, index) => (
-                <button
-                  type="button"
-                  key={index}
-                  onClick={() => makeMove(index)}
-                  disabled={
-                    !myPlayer ||
-                    isMoving ||
-                    room.status !== "playing" ||
-                    room.turn !== myPlayer.symbol ||
-                    !!cell
-                  }
-                  className={`aspect-square flex items-center justify-center rounded-lg border border-border text-3xl font-black transition-all
-                    ${cell === "X" ? "text-primary bg-primary/10 cell-animate" : ""}
-                    ${cell === "O" ? "text-accent bg-accent/10 cell-animate" : ""}
-                    ${!cell && myPlayer && room.status === "playing" && room.turn === myPlayer.symbol
-                      ? "bg-background hover:bg-primary/10 hover:border-primary/50 cursor-pointer"
-                      : "bg-background/50 cursor-not-allowed"
-                    }
-                    ${cell ? "cursor-not-allowed" : ""}
-                  `}
-                  aria-label={`Cell ${index + 1}`}
-                >
-                  {cell}
-                </button>
-              ))}
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              {room.board.map((cell, index) => {
+                const isMyTurn = myPlayer && room.status === "playing" && room.turn === myPlayer.symbol;
+                const canMakeMove = isMyTurn && !cell && !isMoving;
+                return (
+                  <button
+                    type="button"
+                    key={index}
+                    onClick={() => makeMove(index)}
+                    disabled={!canMakeMove}
+                    className={`aspect-square flex items-center justify-center rounded-xl border-2 border-dashed text-4xl font-black transition-all shadow-xs
+                      ${cell === "X" ? "text-brand bg-brand-softer border-brand cell-animate" : ""}
+                      ${cell === "O" ? "text-fg-purple bg-purple-soft border-purple cell-animate" : ""}
+                      ${!cell && canMakeMove
+                        ? "bg-neutral-primary-soft border-brand hover:bg-brand-softer hover:border-brand-strong hover:scale-105 cursor-pointer"
+                        : ""
+                      }
+                      ${!cell && !canMakeMove
+                        ? "bg-neutral-primary-soft border-border-default cursor-not-allowed"
+                        : ""
+                      }
+                    `}
+                    aria-label={`Cell ${index + 1}`}
+                  >
+                    {cell}
+                  </button>
+                );
+              })}
             </div>
 
             {room.players.length < 2 && (
               <button
                 type="button"
                 onClick={joinRoom}
-                className="w-full py-2.5 rounded-lg border border-border bg-surface font-semibold text-sm hover:bg-surface-hover transition-colors mb-2"
+                className="sketch-button sketch-button-secondary w-full py-3 mb-2"
               >
                 Join as Player O
               </button>
@@ -192,7 +209,7 @@ export default function RoomPage() {
                 type="button"
                 onClick={restartGame}
                 disabled={isRestarting}
-                className="w-full py-2.5 rounded-lg bg-primary text-background font-bold text-sm hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed pulse-glow"
+                className="sketch-button w-full py-3 pulse-glow"
               >
                 {isRestarting ? "Restarting..." : "Replay"}
               </button>

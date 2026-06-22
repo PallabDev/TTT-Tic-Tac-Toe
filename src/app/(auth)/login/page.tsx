@@ -39,52 +39,63 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-5">
-      <div className="w-full max-w-[420px] rounded-xl border border-border bg-surface p-6 shadow-2xl backdrop-blur-xl fade-in">
+    <div className="min-h-screen flex items-center justify-center p-5 bg-neutral-primary-soft">
+      <div className="w-full max-w-[420px] sketch-card bg-neutral-primary-medium fade-in">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">Welcome back</h2>
+          <h2 className="text-3xl font-hand font-normal text-heading">
+            {mode === "login" ? "Welcome back" : "Join the Arena"}
+          </h2>
           <Link
             href="/"
-            className="px-3 py-1.5 text-sm rounded-lg border border-border bg-transparent hover:bg-surface-hover transition-colors"
+            className="sketch-button sketch-button-secondary text-xs px-4 py-1.5"
           >
             Home
           </Link>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <input
-            className="w-full px-4 py-2.5 rounded-lg border border-border bg-background text-foreground placeholder:text-muted text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-colors"
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <input
-            className="w-full px-4 py-2.5 rounded-lg border border-border bg-background text-foreground placeholder:text-muted text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-colors"
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={6}
-          />
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="flex flex-col">
+            <label htmlFor="email" className="sketch-label">Email Address</label>
+            <input
+              id="email"
+              className="sketch-input"
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="flex flex-col">
+            <label htmlFor="password" className="sketch-label">Password</label>
+            <input
+              id="password"
+              className="sketch-input"
+              type="password"
+              placeholder="Min 6 characters"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+            />
+          </div>
 
           {error && (
-            <p className="text-error text-sm">{error}</p>
+            <p className="text-danger text-sm text-center font-medium">{error}</p>
           )}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 rounded-lg bg-primary text-background font-bold text-sm hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="sketch-button w-full mt-2 py-3"
           >
             {loading ? "Please wait..." : mode === "login" ? "Login" : "Register"}
           </button>
 
           <button
             type="button"
-            className="w-full py-2 rounded-lg border border-border bg-transparent text-sm text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
+            className="sketch-button sketch-button-secondary w-full py-2.5"
             onClick={() => {
               setMode(mode === "login" ? "register" : "login");
               setError("");
