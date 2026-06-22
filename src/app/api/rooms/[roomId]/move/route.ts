@@ -78,6 +78,14 @@ export async function POST(
       },
     });
 
+    // Trigger Pusher event to update the other player in real-time
+    try {
+      const { pusherServer } = await import("@/lib/pusher-server");
+      await pusherServer.trigger(`room-${roomId}`, "room-updated", { room: updatedRoom });
+    } catch (err) {
+      console.error("Pusher move trigger error:", err);
+    }
+
     return successResponse({ room: updatedRoom }, "Move updated");
   } catch (error) {
     console.error("Make move error:", error);

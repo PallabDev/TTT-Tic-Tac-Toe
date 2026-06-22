@@ -4,9 +4,9 @@ import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { api, type Room } from "@/lib/api";
+import { pusherClient } from "@/lib/pusher-client";
 
 const ROOM_KEY = "ttt_room_id";
-const POLL_INTERVAL = 1000;
 
 export default function RoomPage() {
   const { roomId } = useParams<{ roomId: string }>();
@@ -16,11 +16,9 @@ export default function RoomPage() {
   const [error, setError] = useState("");
   const [isMoving, setIsMoving] = useState(false);
   const [isRestarting, setIsRestarting] = useState(false);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastUpdateRef = useRef<string>("");
 
   const fetchRoom = useCallback(async () => {
-    if (isMoving) return;
     try {
       const res = await api.rooms.get(roomId);
       const newRoom = res.data.room;
@@ -33,15 +31,28 @@ export default function RoomPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch room");
     }
-  }, [roomId, isMoving]);
+  }, [roomId]);
 
   useEffect(() => {
+    // Initial fetch
     fetchRoom();
-    pollRef.current = setInterval(fetchRoom, POLL_INTERVAL);
+
+    if (!pusherClient) return;
+
+    // Subscribe to room channel
+    const channel = pusherClient.subscribe(`room-${roomId}`);
+    
+    // Bind updates
+    channel.bind("room-updated", (data: { room: Room }) => {
+      setRoom(data.room);
+      lastUpdateRef.current = data.room.updatedAt;
+    });
+
     return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
+      channel.unbind("room-updated");
+      pusherClient?.unsubscribe(`room-${roomId}`);
     };
-  }, [fetchRoom]);
+  }, [roomId, fetchRoom]);
 
   const myPlayer = useMemo(
     () => room?.players.find((p) => p.userId === user?.id),

@@ -49,6 +49,14 @@ export async function POST(
       },
     });
 
+    // Trigger Pusher event to reset state for both players in real-time
+    try {
+      const { pusherServer } = await import("@/lib/pusher-server");
+      await pusherServer.trigger(`room-${roomId}`, "room-updated", { room: updatedRoom });
+    } catch (err) {
+      console.error("Pusher restart trigger error:", err);
+    }
+
     return successResponse({ room: updatedRoom }, "Game restarted");
   } catch (error) {
     console.error("Restart game error:", error);
