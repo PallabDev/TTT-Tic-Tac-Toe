@@ -31,6 +31,7 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/src/generated ./src/generated
 COPY --from=builder /app/server.js ./server.js
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 
 # Expose Next.js custom server port
 EXPOSE 3001
