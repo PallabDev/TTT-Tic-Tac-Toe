@@ -19,6 +19,8 @@ jobs:
           port: 22
           script: |
             cd /root/project/TTT-Tic-Tac-Toe
+            # Ensure the shared caddy_net network exists on the host VPS
+            docker network inspect caddy_net >/dev/null 2>&1 || docker network create caddy_net
             # Reset any local changes to prevent merge conflicts
             git reset --hard origin/main
             # Pull the latest changes from Github
