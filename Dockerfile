@@ -11,6 +11,7 @@ RUN npm install
 COPY . .
 
 # Generate Prisma client and build Next.js application
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 RUN npx prisma generate
 RUN npm run build
 
