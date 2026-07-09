@@ -50,12 +50,12 @@ export async function POST(
       },
     });
 
-    // Trigger Pusher event to notify other player
+    // Trigger Socket.io event to notify other player
     try {
-      const { pusherServer } = await import("@/lib/pusher-server");
-      await pusherServer.trigger(`room-${roomId}`, "room-updated", { room: updatedRoom });
+      const { triggerSocketEvent } = await import("@/lib/socket-server");
+      triggerSocketEvent(roomId, "room-updated", { room: updatedRoom });
     } catch (err) {
-      console.error("Pusher join trigger error:", err);
+      console.error("Socket.io trigger error:", err);
     }
 
     return successResponse({ room: updatedRoom }, "Joined room");

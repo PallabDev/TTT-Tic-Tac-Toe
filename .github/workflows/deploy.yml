@@ -1,0 +1,28 @@
+name: Deploy Tic-Tac-Toe to VPS
+
+on:
+  push:
+    branches:
+      - main # Adjust this if your default branch is different (e.g., 'master')
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: SSH into VPS and deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: 22
+          script: |
+            cd /root/project/TTT-Tic-Tac-Toe
+            # Reset any local changes to prevent merge conflicts
+            git reset --hard origin/main
+            # Pull the latest changes from Github
+            git pull
+            # Rebuild and restart the application stack
+            docker compose down --remove-orphans
+            docker compose up -d --build

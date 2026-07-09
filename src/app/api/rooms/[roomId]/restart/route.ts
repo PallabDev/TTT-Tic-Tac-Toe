@@ -49,12 +49,12 @@ export async function POST(
       },
     });
 
-    // Trigger Pusher event to reset state for both players in real-time
+    // Trigger Socket.io event to reset state for both players in real-time
     try {
-      const { pusherServer } = await import("@/lib/pusher-server");
-      await pusherServer.trigger(`room-${roomId}`, "room-updated", { room: updatedRoom });
+      const { triggerSocketEvent } = await import("@/lib/socket-server");
+      triggerSocketEvent(roomId, "room-updated", { room: updatedRoom });
     } catch (err) {
-      console.error("Pusher restart trigger error:", err);
+      console.error("Socket.io trigger error:", err);
     }
 
     return successResponse({ room: updatedRoom }, "Game restarted");

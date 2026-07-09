@@ -78,12 +78,12 @@ export async function POST(
       },
     });
 
-    // Trigger Pusher event to update the other player in real-time
+    // Trigger Socket.io event to update the other player in real-time
     try {
-      const { pusherServer } = await import("@/lib/pusher-server");
-      await pusherServer.trigger(`room-${roomId}`, "room-updated", { room: updatedRoom });
+      const { triggerSocketEvent } = await import("@/lib/socket-server");
+      triggerSocketEvent(roomId, "room-updated", { room: updatedRoom });
     } catch (err) {
-      console.error("Pusher move trigger error:", err);
+      console.error("Socket.io trigger error:", err);
     }
 
     return successResponse({ room: updatedRoom }, "Move updated");

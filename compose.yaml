@@ -1,0 +1,48 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ttt-postgres
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: tictactoe
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  web:
+    build: .
+    container_name: ttt-web
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: "3001"
+      DATABASE_URL: "postgresql://admin:admin123@postgres:5432/tictactoe?schema=public"
+      JWT_SECRET: "AsYOVp3IPRosqwuX2TJRdeZ3GoRtgMEeEemsWZiLPuxDB5oyZBPAhG0HcDIVZ2td"
+      JWT_REFRESH_SECRET: "8GvO3G3yZLO7eFH9WbF2M63x3QHHglAdR10GTBOCcViYw82CbOrcx4VvumdEUKMs"
+      NEXT_PUBLIC_APP_URL: "https://ttt.pallabdev.in"
+    depends_on:
+      - postgres
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: ttt-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+
+volumes:
+  pg_data:
+  caddy_data:
+  caddy_config:

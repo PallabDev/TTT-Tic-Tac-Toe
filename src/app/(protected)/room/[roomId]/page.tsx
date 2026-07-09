@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { api, type Room } from "@/lib/api";
-import { pusherClient } from "@/lib/pusher-client";
+import { getSocket } from "@/lib/socket-client";
 
 const ROOM_KEY = "ttt_room_id";
 
@@ -37,20 +37,25 @@ export default function RoomPage() {
     // Initial fetch
     fetchRoom();
 
-    if (!pusherClient) return;
+    const socket = getSocket();
+    if (!socket) return;
 
-    // Subscribe to room channel
-    const channel = pusherClient.subscribe(`room-${roomId}`);
-    
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    // Join room
+    socket.emit("join-room", roomId);
+
     // Bind updates
-    channel.bind("room-updated", (data: { room: Room }) => {
+    socket.on("room-updated", (data: { room: Room }) => {
       setRoom(data.room);
       lastUpdateRef.current = data.room.updatedAt;
     });
 
     return () => {
-      channel.unbind("room-updated");
-      pusherClient?.unsubscribe(`room-${roomId}`);
+      socket.emit("leave-room", roomId);
+      socket.off("room-updated");
     };
   }, [roomId, fetchRoom]);
 
