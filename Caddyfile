@@ -1,7 +1,0 @@
-ttt.pallabdev.in {
-    # Enable gzip and zstd compression
-    encode gzip zstd
-
-    # Reverse proxy to the web container (Next.js + Socket.io custom server)
-    reverse_proxy web:3001
-}

@@ -26,23 +26,16 @@ services:
       NEXT_PUBLIC_APP_URL: "https://ttt.pallabdev.in"
     depends_on:
       - postgres
+    networks:
+      - default
+      - caddy_net
+    labels:
+      caddy: ttt.pallabdev.in
+      caddy.reverse_proxy: "{{upstreams 3001}}"
 
-  caddy:
-    image: caddy:2-alpine
-    container_name: ttt-caddy
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      - web
+networks:
+  caddy_net:
+    external: true
 
 volumes:
   pg_data:
-  caddy_data:
-  caddy_config:
